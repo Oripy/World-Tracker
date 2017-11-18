@@ -11,7 +11,7 @@ app.set('port', (process.env.PORT || 5000));
 
 // set up Mongoose connection
 const mongoose = require('mongoose');
-var mongoDB = 'mongodb://127.0.0.1/WORLDMAP';
+var mongoDB = process.env.MONGODB_URI;
 mongoose.connect(mongoDB, {
   useMongoClient: true
 });
@@ -63,7 +63,7 @@ app.post("/addcity", (req, res) => {
     })
     .catch(err => {
       res.status(400).send("Impossible de sauvegarder dans la BDD");
-    });  
+    });
 });
 
 app.use("/", (req, res) => {
