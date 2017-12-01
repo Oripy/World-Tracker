@@ -49,14 +49,14 @@
 
 <body>
   <div data-role="page" id="home">
-    
+
     <div data-role="header" data-theme="b" data-position="fixed">
       <h1>World Tracker</h1>
       <div data-role="navbar">
         <ul>
           <li><a id="add" href="javascript:void(0);" data-transition="none" data-icon="plus">Ajouter</a></li>
           <li><a id="upload" href="javascript:void(0);" data-transition="none" data-icon="arrow-d">Envoyer</a></li>
-          <li><a href="#map" data-transition="none" data-icon="location">Carte</a></li>
+          <li><a href="#options" data-transition="none" data-icon="gear">Options</a></li>
         </ul>
       </div>
     </div>
@@ -67,9 +67,9 @@
       </div>
     </div>
   </div>
-  <div data-role="page" id="map">
+  <div data-role="page" id="options">
     <div data-role="header" data-theme="b"  data-position="fixed">
-      <h1>Carte</h1>
+      <h1>Options</h1>
       <div data-role="navbar">
         <ul>
           <li><a id="back" href="#home" data-transition="none" data-icon="back">Retour</a></li>
@@ -77,6 +77,7 @@
       </div>
     </div>
     <div data-role="content">
+      <button id="clear" class="ui-btn ui-corner-all">Remise à Zéro</button>
     </div>
   </div>
 

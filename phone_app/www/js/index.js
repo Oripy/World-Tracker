@@ -1,5 +1,8 @@
 var db;
 var openRequest = window.indexedDB.open("LocationsHistory", 1);
+
+const website = "https://mysterious-basin-24267.herokuapp.com/";
+
 openRequest.onerror = function (error) {
   alert("Database error: " + openRequest.errorCode);
   console.log(openRequest.errorCode);
@@ -24,7 +27,7 @@ openRequest.onupgradeneeded = function () {
 //document.addEventListener("deviceready", function(){
 //}
 
-var displayData = function() {
+var sendData = function() {
   console.log("Displaying data...");
   $("#info").html('<p id="info_top"></p>');
 
@@ -35,13 +38,24 @@ var displayData = function() {
   objectStore.openCursor().onsuccess = function(event) {
     var cursor = event.target.result;
     if (cursor) {
-      locations.push(cursor.value);
+      if (cursor.value["uploaded"] == false) {
+        locations.push(cursor.value);
+        $.post(website+"/addlocation", cursor.value, function() {
+          let newval = cursor.value;
+          newval["uploaded"] = true;
+          let trans = db.transaction("locations", "readwrite");
+          var objectSt = trans.objectStore("locations");
+          var req = objectSt.put(newval);
+          req.onsuccess = function(event) {
+            $("#info_top").after(".");
+          };
+        });
+      }
       cursor.continue();
-    }
-    else {
+    } else {
       for (var i = 0; i < locations.length; i++) {
         var date = new Date(locations[i].timestamp);
-        $("#info_top").after("<p>" + date + ", " + locations[i].latitude + ", " + locations[i].longitude + "</p>");
+        $("#info_top").after("<p>" + date + ", " + locations[i].latitude + ", " + locations[i].longitude + ", " + locations[i].uploaded +"</p>");
       }
     }
   };
@@ -56,10 +70,10 @@ var onSuccess = function(position) {
     altitudeAccuracy: position.coords.altitudeAccuracy,
     heading: position.coords.heading,
     speed: position.coords.speed,
-    timestamp: position.timestamp,
+    timestamp: new Date(position.timestamp),
     uploaded: false
   } ];
-  console.log(data[0].latitude);
+
   var transaction = db.transaction("locations", "readwrite");
   // transaction.oncomplete = function(event) {
   //   alert("All done!");
@@ -71,19 +85,8 @@ var onSuccess = function(position) {
   var objectStore = transaction.objectStore("locations");
   var request = objectStore.put(data[0]);
   request.onsuccess = function(event) {
-    // event.target.result == customerData[i].ssn;
-    alert("Location saved!");
+    $("#info_top").after("<p>" + position.coords.latitude + ", " + position.coords.longitude);
   };
-
-  $("#info_end").after("<p>" + position.coords.latitude + ", " + position.coords.longitude);
-  alert('Latitude: '          + position.coords.latitude          + '\n' +
-        'Longitude: '         + position.coords.longitude         + '\n' +
-        'Altitude: '          + position.coords.altitude          + '\n' +
-        'Accuracy: '          + position.coords.accuracy          + '\n' +
-        'Altitude Accuracy: ' + position.coords.altitudeAccuracy  + '\n' +
-        'Heading: '           + position.coords.heading           + '\n' +
-        'Speed: '             + position.coords.speed             + '\n' +
-        'Timestamp: '         + position.timestamp                + '\n');
 };
 
 function onError(error) {
@@ -91,25 +94,30 @@ function onError(error) {
           'message: ' + error.message + '\n');
 }
 $("#add").click(function(){
-  console.log("Add button clicked");
   navigator.geolocation.getCurrentPosition(onSuccess, onError, {timeout: 30000});
-    // // Start tracking the User
-    // watch_id = navigator.geolocation.watchPosition(
-    //
-    //     // Success
-    //     function(position){
-    //         tracking_data.push(position);
-    //     },
-    //
-    //     // Error
-    //     function(error){
-    //         console.log(error);
-    //     },
-    //
-    //     // Settings
-    //     { frequency: 3000, enableHighAccuracy: true });
 });
+
 $("#upload").click(function(){
-  console.log("Upload button clicked");
-  displayData();
+  if (navigator.network.connection.type != Connection.NONE) {
+    sendData();
+  } else {
+    alert("Pas de connection réseau");
+  }
 });
+
+$("#clear").click(function(){
+  if (confirm("Effacer tout l'historique ?")) {
+    if (confirm("Vraiment sûr ?")) {
+      cleardata();
+    }
+  }
+});
+
+cleardata = function() {
+  var transaction = db.transaction("locations", "readwrite");
+  var objectStore = transaction.objectStore("locations");
+  var request = objectStore.clear();
+  request.onsuccess = function(event) {
+    alert("All data cleared!");
+  };
+}
